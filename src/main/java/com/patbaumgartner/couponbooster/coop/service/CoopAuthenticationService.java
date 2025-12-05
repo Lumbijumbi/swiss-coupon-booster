@@ -301,10 +301,37 @@ public class CoopAuthenticationService extends AbstractAuthenticationService {
 	}
 
 	private void validateUserCredentials() {
-		if (isBlank(userCredentials.email()) || isBlank(userCredentials.password())) {
-			throw new CouponBoosterException(
-					"User credentials are missing. Configure coop.user.email and coop.user.password");
+		var validationErrors = new java.util.ArrayList<String>();
+
+		if (isBlank(userCredentials.email())) {
+			validationErrors.add("Email is missing (coop.user.email)");
 		}
+		else if (!isValidEmailFormat(userCredentials.email())) {
+			validationErrors.add("Email format is invalid (coop.user.email)");
+		}
+
+		if (isBlank(userCredentials.password())) {
+			validationErrors.add("Password is missing (coop.user.password)");
+		}
+
+		if (!validationErrors.isEmpty()) {
+			String errorMessage = "Credential validation failed: " + String.join("; ", validationErrors);
+			log.error(errorMessage);
+			throw new CouponBoosterException(errorMessage);
+		}
+
+		log.debug("User credentials validated successfully");
+	}
+
+	/**
+	 * Validates email format using a basic pattern check.
+	 * @param email the email to validate
+	 * @return true if email format is valid, false otherwise
+	 */
+	private boolean isValidEmailFormat(String email) {
+		// Basic email pattern validation - matches the @Email annotation
+		return email != null && email.contains("@") && email.contains(".")
+				&& email.indexOf("@") < email.lastIndexOf(".");
 	}
 
 	private void performLoginFlow(Page page) {

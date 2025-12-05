@@ -35,5 +35,8 @@ coop:
 
   playwright:
     datadome-cookie-value: "dummy-cookie-value"
-
+    # Disable GUI mode in tests
+    gui-mode: false
+    # No browser channel in tests (use bundled Chromium)
+    browser-channel: ""
 

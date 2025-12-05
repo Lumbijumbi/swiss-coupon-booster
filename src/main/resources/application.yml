@@ -45,6 +45,13 @@ coop:
     typing-delay-ms: 100
     slow-mo-ms: 1000
     headless: false
+    # GUI Mode: When enabled, optimizes browser for desktop GUI interaction (OSX, Windows, Linux)
+    # Overrides headless to false and applies GUI-specific settings
+    gui-mode: ${COOP_GUI_MODE:true}
+    # Browser channel: Use system Chrome on OSX for better compatibility
+    # Options: chrome, msedge, chrome-beta, msedge-beta, msedge-dev, chrome-canary
+    # Leave empty to use bundled Chromium
+    browser-channel: "${COOP_BROWSER_CHANNEL:}"
     chrome-args:
       # CRITICAL for hiding automation
       - "--disable-blink-features=AutomationControlled"
