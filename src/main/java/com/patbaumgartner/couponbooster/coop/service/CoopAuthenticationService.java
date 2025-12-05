@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -301,7 +302,7 @@ public class CoopAuthenticationService extends AbstractAuthenticationService {
 	}
 
 	private void validateUserCredentials() {
-		var validationErrors = new java.util.ArrayList<String>();
+		List<String> validationErrors = new java.util.ArrayList<>();
 
 		if (isBlank(userCredentials.email())) {
 			validationErrors.add("Email is missing (coop.user.email)");
@@ -324,14 +325,20 @@ public class CoopAuthenticationService extends AbstractAuthenticationService {
 	}
 
 	/**
-	 * Validates email format using a basic pattern check.
+	 * Email pattern that validates basic email format. Requires: - At least one character
+	 * before @ - @ symbol - At least one character between @ and . - . symbol - At least
+	 * two characters after the last .
+	 */
+	private static final java.util.regex.Pattern EMAIL_PATTERN = java.util.regex.Pattern
+		.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$");
+
+	/**
+	 * Validates email format using a regex pattern.
 	 * @param email the email to validate
 	 * @return true if email format is valid, false otherwise
 	 */
 	private boolean isValidEmailFormat(String email) {
-		// Basic email pattern validation - matches the @Email annotation
-		return email != null && email.contains("@") && email.contains(".")
-				&& email.indexOf("@") < email.lastIndexOf(".");
+		return email != null && EMAIL_PATTERN.matcher(email).matches();
 	}
 
 	private void performLoginFlow(Page page) {
