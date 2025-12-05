@@ -75,12 +75,26 @@ coop:
   user:
     email: 'your-coop-email@example.com'
     password: 'your-coop-password'
-  # Required for Coop login flow due to bot detection
   playwright:
-    datadomeCookieValue: 'your-datadome-cookie-value'
+    # Optional: DataDome cookie for bypassing bot detection (stealth measures may suffice)
+    datadome-cookie-value: 'your-datadome-cookie-value'
+    # GUI Mode: Enable visible browser window (recommended for OSX)
+    gui-mode: true
+    # Browser Channel: Use system Chrome on OSX for better compatibility
+    # Options: chrome, msedge, chrome-beta, msedge-beta, msedge-dev, chrome-canary
+    # Leave empty to use bundled Chromium
+    browser-channel: 'chrome'
 ```
 
-**Important:** The `datadomeCookieValue` for Coop is necessary to bypass their bot detection measures. You may need to manually acquire this value from a real browser session.
+### OSX/macOS Users
+
+For the best experience on macOS, we recommend:
+
+1. **Enable GUI mode** (`gui-mode: true`) - This opens a visible browser window, which is more reliable for authentication flows.
+2. **Use system Chrome** (`browser-channel: chrome`) - This uses your installed Chrome browser instead of bundled Chromium, providing better compatibility.
+3. **Persistent storage** - The application uses `playwright-user-data` directory by default to store browser session data, reducing the need for repeated logins.
+
+**Important:** The `datadome-cookie-value` for Coop is now optional. Stealth measures are in place to bypass bot detection. Only configure this if you experience detection issues.
 
 ## Usage
 
