@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Factory for creating and configuring Playwright {@link Browser} instances for Coop
@@ -23,6 +25,9 @@ import java.nio.file.Paths;
  * This factory handles the setup of a Chromium browser with the appropriate configuration
  * for web automation tasks, including headless mode, slow motion, timeout settings,
  * anti-bot detection arguments, and proxy configuration.
+ * <p>
+ * Supports GUI mode for desktop environments (OSX, Windows, Linux) with optimized
+ * settings for visible browser interaction.
  *
  * @see CoopPlaywrightProperties
  * @see ProxyProperties
@@ -50,6 +55,11 @@ public class CoopBrowserFactory extends AbstractBrowserFactory {
 		this.proxyProperties = proxyProperties;
 		this.browserConfiguration = browserConfiguration;
 		this.proxyResolver = proxyResolver;
+
+		if (browserConfiguration.guiMode()) {
+			log.info("GUI mode enabled - browser will be visible. macOS detected: {}",
+					CoopPlaywrightProperties.isMacOS());
+		}
 	}
 
 	/**
@@ -65,11 +75,22 @@ public class CoopBrowserFactory extends AbstractBrowserFactory {
 
 			BrowserType.LaunchPersistentContextOptions options = new BrowserType.LaunchPersistentContextOptions();
 
+			// Use effective headless mode (respects GUI mode override)
+			boolean effectiveHeadless = browserConfiguration.effectiveHeadless();
+
 			// Map launch options
-			options.setHeadless(browserConfiguration.headless())
+			options.setHeadless(effectiveHeadless)
 				.setSlowMo(browserConfiguration.slowMoMs())
-				.setArgs(browserConfiguration.chromeArgs())
+				.setArgs(getEffectiveChromeArgs())
 				.setTimeout(browserConfiguration.timeoutMs());
+
+			// Set browser channel if specified (e.g., "chrome" for system Chrome on OSX)
+			if (browserConfiguration.browserChannel() != null && !browserConfiguration.browserChannel().isBlank()) {
+				options.setChannel(browserConfiguration.browserChannel());
+				if (log.isDebugEnabled()) {
+					log.debug("Using browser channel: {}", browserConfiguration.browserChannel());
+				}
+			}
 
 			if (proxyProperties.enabled()) {
 				ProxyAddress proxy = proxyResolver.getRandomProxy();
@@ -126,17 +147,55 @@ public class CoopBrowserFactory extends AbstractBrowserFactory {
 		}
 	}
 
+	/**
+	 * Returns the effective Chrome arguments, potentially adding OSX-specific or
+	 * GUI-specific arguments.
+	 * @return list of Chrome arguments to use
+	 */
+	private List<String> getEffectiveChromeArgs() {
+		List<String> args = new ArrayList<>(browserConfiguration.chromeArgs());
+
+		// Add OSX-specific arguments when in GUI mode on macOS
+		if (browserConfiguration.guiMode() && CoopPlaywrightProperties.isMacOS()) {
+			// Ensure GPU rendering works properly on macOS
+			if (!containsArg(args, "--use-gl=")) {
+				args.add("--use-gl=angle");
+			}
+			// Enable smooth scrolling on macOS
+			if (!containsArg(args, "--enable-smooth-scrolling")) {
+				args.add("--enable-smooth-scrolling");
+			}
+			log.debug("Added macOS-specific GUI arguments");
+		}
+
+		return args;
+	}
+
+	/**
+	 * Checks if the args list contains an argument starting with the given prefix.
+	 */
+	private boolean containsArg(List<String> args, String prefix) {
+		return args.stream().anyMatch(arg -> arg.startsWith(prefix));
+	}
+
 	private Browser createBrowser(Playwright playwrightInstance) {
+		boolean effectiveHeadless = browserConfiguration.effectiveHeadless();
+
 		if (log.isDebugEnabled()) {
-			log.debug("Creating browser with headless: {}, slowMo: {}ms, args: {}", browserConfiguration.headless(),
-					browserConfiguration.slowMoMs(), browserConfiguration.chromeArgs());
+			log.debug("Creating browser with headless: {}, guiMode: {}, slowMo: {}ms, args: {}", effectiveHeadless,
+					browserConfiguration.guiMode(), browserConfiguration.slowMoMs(), browserConfiguration.chromeArgs());
 		}
 
 		BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions();
-		launchOptions.setHeadless(browserConfiguration.headless())
+		launchOptions.setHeadless(effectiveHeadless)
 			.setSlowMo(browserConfiguration.slowMoMs())
-			.setArgs(browserConfiguration.chromeArgs())
+			.setArgs(getEffectiveChromeArgs())
 			.setTimeout(browserConfiguration.timeoutMs());
+
+		// Set browser channel if specified
+		if (browserConfiguration.browserChannel() != null && !browserConfiguration.browserChannel().isBlank()) {
+			launchOptions.setChannel(browserConfiguration.browserChannel());
+		}
 
 		if (proxyProperties.enabled()) {
 			ProxyAddress proxy = proxyResolver.getRandomProxy();
