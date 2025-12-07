@@ -86,6 +86,46 @@ coop:
 
 Once the application is running, the coupon activation process is triggered automatically on startup. The application will log its progress to the console, detailing the coupons it finds and activates. After the process is complete, the application will exit.
 
+### Account Verification Mode
+
+In addition to the coupon activation functionality, this application can be used as a standalone account verification tool. This is particularly useful for organizations (Verein) to verify multiple member (Mitglieder) accounts.
+
+To enable account verification mode:
+
+1. **Configure verification settings** in `application.yml`:
+
+    ```yaml
+    verification:
+      enabled: true
+      accounts:
+        - email: 'member1@example.com'
+          password: 'member1-password'
+          provider: 'migros'
+        - email: 'member2@example.com'
+          password: 'member2-password'
+          provider: 'coop'
+    ```
+
+2. **Disable coupon activation** (optional):
+
+    ```yaml
+    migros:
+      login:
+        enabled: false
+    
+    coop:
+      login:
+        enabled: false
+    ```
+
+3. **Run the application**:
+
+    ```sh
+    mvn spring-boot:run
+    ```
+
+The application will verify each account by attempting to log in and report the results. This allows you to quickly check which accounts are valid and which ones have issues.
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
