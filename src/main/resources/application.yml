@@ -29,11 +29,12 @@ verification:
   enabled: ${VERIFICATION_ENABLED:false}
   accounts:
     # Example configuration for account verification
-    # - email: "member1@example.com"
-    #   password: "password1"
+    # WARNING: For security, use environment variables for passwords in production:
+    # - email: "${MEMBER1_EMAIL}"
+    #   password: "${MEMBER1_PASSWORD}"
     #   provider: "migros"
-    # - email: "member2@example.com"
-    #   password: "password2"
+    # - email: "${MEMBER2_EMAIL}"
+    #   password: "${MEMBER2_PASSWORD}"
     #   provider: "coop"
 
 proxy:

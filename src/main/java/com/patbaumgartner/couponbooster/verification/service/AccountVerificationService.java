@@ -154,7 +154,8 @@ public class AccountVerificationService {
 				page.waitForLoadState(LoadState.NETWORKIDLE);
 
 				// Check if still on login page (indicates failure)
-				if (page.url().contains("login.migros.ch")) {
+				String loginDomain = extractDomain(migrosPlaywrightProperties.loginUrl());
+				if (page.url().contains(loginDomain)) {
 					var duration = System.currentTimeMillis() - startTime;
 					return AccountVerificationResult.failed(credentials.email(), credentials.provider(),
 							"Authentication failed - still on login page", duration);
@@ -290,6 +291,23 @@ public class AccountVerificationService {
 			.setIsMobile(false)
 			.setHasTouch(false)
 			.setColorScheme(com.microsoft.playwright.options.ColorScheme.LIGHT);
+	}
+
+	/**
+	 * Extracts the domain from a URL.
+	 * @param url the URL to extract the domain from
+	 * @return the domain portion of the URL
+	 */
+	private String extractDomain(String url) {
+		try {
+			// Extract domain from URL (e.g., "https://login.migros.ch/" ->
+			// "login.migros.ch")
+			return url.replace("https://", "").replace("http://", "").split("/")[0];
+		}
+		catch (Exception e) {
+			log.warn("Failed to extract domain from URL: {}", url, e);
+			return url;
+		}
 	}
 
 }

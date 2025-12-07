@@ -58,7 +58,7 @@ public class AccountVerificationRunner implements ApplicationRunner {
 		List<AccountCredentials> credentialsList = new ArrayList<>();
 		for (var accountConfig : verificationProperties.accounts()) {
 			try {
-				var provider = AccountProvider.valueOf(accountConfig.provider().toUpperCase(Locale.ROOT));
+				var provider = parseProvider(accountConfig.provider());
 				credentialsList.add(new AccountCredentials(accountConfig.email(), accountConfig.password(), provider));
 			}
 			catch (IllegalArgumentException e) {
@@ -102,6 +102,26 @@ public class AccountVerificationRunner implements ApplicationRunner {
 		log.info("=".repeat(80));
 		log.info("Total: {} | Successful: {} | Failed: {}", results.size(), successCount, failureCount);
 		log.info("=".repeat(80));
+	}
+
+	/**
+	 * Parses a provider string to an AccountProvider enum. Supports case-insensitive
+	 * matching.
+	 * @param providerString the provider string (e.g., "migros", "MIGROS", "coop")
+	 * @return the corresponding AccountProvider
+	 * @throws IllegalArgumentException if the provider string is invalid
+	 */
+	private AccountProvider parseProvider(String providerString) {
+		if (providerString == null || providerString.isBlank()) {
+			throw new IllegalArgumentException("Provider cannot be null or blank");
+		}
+
+		return switch (providerString.trim().toLowerCase(Locale.ROOT)) {
+			case "migros" -> AccountProvider.MIGROS;
+			case "coop" -> AccountProvider.COOP;
+			default -> throw new IllegalArgumentException(
+					"Unknown provider: " + providerString + ". Valid providers are: migros, coop");
+		};
 	}
 
 }
