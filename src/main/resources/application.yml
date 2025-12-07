@@ -25,6 +25,18 @@ logging:
 two-captcha:
   api-key: "${TWO_CAPTCHA_API_KEY:}"
 
+verification:
+  enabled: ${VERIFICATION_ENABLED:false}
+  accounts:
+    # Example configuration for account verification
+    # WARNING: For security, use environment variables for passwords in production:
+    # - email: "${MEMBER1_EMAIL}"
+    #   password: "${MEMBER1_PASSWORD}"
+    #   provider: "migros"
+    # - email: "${MEMBER2_EMAIL}"
+    #   password: "${MEMBER2_PASSWORD}"
+    #   provider: "coop"
+
 proxy:
   enabled: ${PROXY_ENABLED:false}
   list-url: "https://proxy.webshare.io/api/v2/proxy/list/download/qlnkscljhsydwjnpccskhyygcgogbztvwgqbmkvl/-/any/username/direct/-/"
