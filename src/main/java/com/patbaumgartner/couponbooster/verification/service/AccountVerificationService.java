@@ -7,6 +7,8 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.LoadState;
+
+import java.net.URI;
 import com.patbaumgartner.couponbooster.coop.properties.CoopPlaywrightProperties;
 import com.patbaumgartner.couponbooster.coop.properties.CoopSelectorsProperties;
 import com.patbaumgartner.couponbooster.coop.service.CoopBrowserFactory;
@@ -154,8 +156,9 @@ public class AccountVerificationService {
 				page.waitForLoadState(LoadState.NETWORKIDLE);
 
 				// Check if still on login page (indicates failure)
-				String loginDomain = extractDomain(migrosPlaywrightProperties.loginUrl());
-				if (page.url().contains(loginDomain)) {
+				String loginHost = extractHost(migrosPlaywrightProperties.loginUrl());
+				String currentHost = extractHost(page.url());
+				if (loginHost.equals(currentHost)) {
 					var duration = System.currentTimeMillis() - startTime;
 					return AccountVerificationResult.failed(credentials.email(), credentials.provider(),
 							"Authentication failed - still on login page", duration);
@@ -294,19 +297,18 @@ public class AccountVerificationService {
 	}
 
 	/**
-	 * Extracts the domain from a URL.
-	 * @param url the URL to extract the domain from
-	 * @return the domain portion of the URL
+	 * Extracts the host from a URL using java.net.URI for robust parsing.
+	 * @param url the URL to extract the host from
+	 * @return the host portion of the URL (e.g., "login.migros.ch")
 	 */
-	private String extractDomain(String url) {
+	private String extractHost(String url) {
 		try {
-			// Extract domain from URL (e.g., "https://login.migros.ch/" ->
-			// "login.migros.ch")
-			return url.replace("https://", "").replace("http://", "").split("/")[0];
+			return new URI(url).getHost();
 		}
 		catch (Exception e) {
-			log.warn("Failed to extract domain from URL: {}", url, e);
-			return url;
+			log.warn("Failed to extract host from URL: {}", url, e);
+			// Fallback to simple parsing if URI parsing fails
+			return url.replace("https://", "").replace("http://", "").split("/")[0].split("\\?")[0];
 		}
 	}
 
